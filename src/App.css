@@ -7,4 +7,6 @@
 .footer{
   padding: 10px 6%;
 }
-
+.hidden {
+  display: none;
+}
