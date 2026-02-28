@@ -1,46 +1,49 @@
-import React from "react";
+import { useState } from "react";
 import "./Playlist.css";
-import albumImg from "../../assets/album.jpg";
-const Playlist = () => {
+
+const Playlist = ({ playlistTracks, onSave, onRemove, accessToken, isSaving }) => {
+  const [playlistName, setPlaylistName] = useState("");
+
+  const handlePlaylistNameChange = (e) => {
+    setPlaylistName(e.target.value);
+  };
+
+  const handleSave = (e) => {
+    e.preventDefault();
+    if (isSaving) return;
+    const trackUris = playlistTracks.map((track) => track.uri);
+    if (!playlistName.trim() || !trackUris.length || !accessToken) return;
+    onSave(playlistName.trim(), trackUris);
+  };
+
   return (
     <div className="playlist">
-      <form>
-        <input type="text" placeholder="Playlist Name" />
-        <button>Save to Spotify</button>
+      <form onSubmit={handleSave}>
+        <input
+          value={playlistName}
+          onChange={handlePlaylistNameChange}
+          type="text"
+          placeholder="Playlist Name"
+          disabled={isSaving}
+        />
+        <button
+          type="submit"
+          disabled={!playlistTracks.length || !accessToken || !playlistName.trim() || isSaving}
+        >
+          {isSaving ? 'Saving…' : 'Save to Spotify'}
+        </button>
       </form>
       <div className="playlist-list">
-        <div className="track">
-          <img src={albumImg} alt="" />
-          <div className="track-info">
-            <h3>Song Name</h3>
-            <p>Artist Name | Album Name</p>
+        {playlistTracks.map((track) => (
+          <div key={track.id} className="track">
+            <img src={track.albumArt} alt={track.album} />
+            <div className="track-info">
+              <h3>{track.name}</h3>
+              <p>{track.artist} | {track.album}</p>
+            </div>
+            <button type="button" onClick={() => onRemove(track)}>-</button>
           </div>
-          <button>-</button>
-        </div>
-        <div className="track">
-          <img src={albumImg} alt="" />
-          <div className="track-info">
-            <h3>Song Name</h3>
-            <p>Artist Name | Album Name</p>
-          </div>
-          <button>-</button>
-        </div>
-        <div className="track">
-          <img src={albumImg} alt="" />
-          <div className="track-info">
-            <h3>Song Name</h3>
-            <p>Artist Name | Album Name</p>
-          </div>
-          <button>-</button>
-        </div>
-        <div className="track">
-          <img src={albumImg} alt="" />
-          <div className="track-info">
-            <h3>Song Name</h3>
-            <p>Artist Name | Album Name</p>
-          </div>
-          <button>-</button>
-        </div>
+        ))}
       </div>
     </div>
   );

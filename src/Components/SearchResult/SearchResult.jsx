@@ -1,64 +1,24 @@
-import React from 'react'
 import './SearchResult.css'
-import albumImg from '../../assets/album.jpg'
 
-const SearchResult = () => {
+const SearchResult = ({ searchRes, onAddTrack }) => {
+  const tracks = Array.isArray(searchRes) ? searchRes : [];
   return (
-    <div className='searchResult'>
+    <div className="searchResult">
       <h1>Results</h1>
       <div className="tracklist">
-        <div className="track">
-          <img src={albumImg} alt="" />
-          <div className="track-info">
-            <h3>Song Name</h3>
-            <p>Artist Name | Album Name</p>
+        {tracks.map((track) => (
+          <div key={track.id} className="track">
+            <img src={track.albumArt} alt="" />
+            <div className="track-info">
+              <h3>{track.name}</h3>
+              <p>{track.artist} | {track.album}</p>
+            </div>
+            <button type="button" onClick={() => onAddTrack(track)}>+</button>
           </div>
-          <button>+</button>
-        </div>
-        <div className="track">
-          <img src={albumImg} alt="" />
-          <div className="track-info">
-            <h3>Song Name</h3>
-            <p>Artist Name | Album Name</p>
-          </div>
-          <button>+</button>
-        </div>
-        <div className="track">
-          <img src={albumImg} alt="" />
-          <div className="track-info">
-            <h3>Song Name</h3>
-            <p>Artist Name | Album Name</p>
-          </div>
-          <button>+</button>
-        </div>
-        <div className="track">
-          <img src={albumImg} alt="" />
-          <div className="track-info">
-            <h3>Song Name</h3>
-            <p>Artist Name | Album Name</p>
-          </div>
-          <button>+</button>
-        </div>
-        <div className="track">
-          <img src={albumImg} alt="" />
-          <div className="track-info">
-            <h3>Song Name</h3>
-            <p>Artist Name | Album Name</p>
-          </div>
-          <button>+</button>
-        </div>
-        <div className="track">
-          <img src={albumImg} alt="" />
-          <div className="track-info">
-            <h3>Song Name</h3>
-            <p>Artist Name | Album Name</p>
-          </div>
-          <button>+</button>
-        </div>
-      </div> 
-
+        ))}
+      </div>
     </div>
-  )
-}
+  );
+};
 
 export default SearchResult

@@ -153,11 +153,8 @@ export const handleAuthCallback = async () => {
     window.sessionStorage.setItem('processed_code', code);
     
     const tokenData = await retrieveAccessToken(code, codeVerifier, uriToUse);
-    // console.log(tokenData);
     const accessToken = tokenData.access_token;
-    // console.log(accessToken);
     const expiresIn = tokenData.expires_in;
-
     if (!accessToken) {
       console.error('No access token in response');
       window.sessionStorage.removeItem('processed_code');
@@ -168,7 +165,7 @@ export const handleAuthCallback = async () => {
       // Store token and expiry
       // For testing: use 30 seconds instead of actual expiry time
       // Change this back to: expiresIn * 1000 for production
-      const testExpirySeconds = 30; // Set this to however many seconds you want for testing
+      const testExpirySeconds = 300; // Set this to however many seconds you want for testing
       const expiryTime = Date.now() + testExpirySeconds * 1000;
       window.localStorage.setItem('spotifyAccessToken', accessToken);
       window.localStorage.setItem('spotifyAccessTokenExpiry', String(expiryTime));
@@ -191,11 +188,116 @@ export const handleAuthCallback = async () => {
       try {
         const errorText = await error.response.text();
         console.error('Error response:', errorText);
-      } catch (e) {
+      } catch {
         // Response already consumed or not readable
       }
     }
     window.history.replaceState({}, document.title, '/');
     return null;
+  }
+};
+export const search = async (term, accessToken) => {
+  const response = await fetch(
+    `https://api.spotify.com/v1/search?type=track&q=${encodeURIComponent(term)}&limit=20`,
+    {
+      headers: {
+        Authorization: `Bearer ${accessToken}`
+      }
+    }
+  );
+  
+  if (!response.ok) {
+    throw new Error('Failed to search tracks');
+  }
+  
+  const jsonResponse = await response.json();
+   console.log(jsonResponse);
+  
+  if (!jsonResponse.tracks) {
+    return [];
+  }
+  
+  return jsonResponse.tracks.items.map(track => ({
+    id: track.id,
+    name: track.name,
+    artist: track.artists?.[0]?.name || 'Unknown Artist',
+    album: track.album?.name || 'Unknown Album',
+    uri: track.uri,
+    albumArt: track.album?.images?.[0]?.url || ''
+  }));
+};
+// Get current user's Spotify ID
+export const getUserId = async (accessToken) => {
+  const response = await fetch('https://api.spotify.com/v1/me', {
+    headers: {
+      Authorization: `Bearer ${accessToken}`
+    }
+  });
+  
+  const jsonResponse = await response.json();
+  console.log(jsonResponse);
+  return jsonResponse.id;
+};
+
+// Create a new playlist
+export const createPlaylist = async (userId, playlistName, accessToken) => {
+  const response = await fetch(
+    `https://api.spotify.com/v1/users/${userId}/playlists`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        name: playlistName,
+        description: 'Created with Jammming',
+        public: false
+      })
+    }
+  );
+  
+  if (!response.ok) {
+    throw new Error('Failed to create playlist');
+  }
+  
+  const jsonResponse = await response.json();
+  console.log(jsonResponse);
+  return jsonResponse.id;
+};
+
+// Add tracks to a playlist
+export const addTracksToPlaylist = async (playlistId, trackUris, accessToken) => {
+  const response = await fetch(
+    `https://api.spotify.com/v1/playlists/${playlistId}/tracks`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        uris: trackUris
+      })
+    }
+  );
+  console.log(response);
+  return response.ok;
+};
+
+// Save playlist to Spotify
+export const savePlaylist = async (playlistName, trackUris, accessToken) => {
+  if (!playlistName?.trim() || !trackUris?.length || !accessToken) {
+    return false;
+  }
+
+  try {
+    const userId = await getUserId(accessToken);
+    const playlistId = await createPlaylist(userId, playlistName.trim(), accessToken);
+    const added = await addTracksToPlaylist(playlistId, trackUris, accessToken);
+    return added === true;
+  } catch (error) {
+    console.error('Error saving playlist:', error);
+    return false;
   }
 };
